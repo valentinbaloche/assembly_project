@@ -104,6 +104,31 @@ def build_graph(kmer_dict):
         graph.add_edge(kmer[:-1], kmer[1:], weight=kmer_dict[kmer])
     return graph
 
+#def get_starting_nodes(graph):
+"prend en entrée un graphe et retourne une liste de noeuds d'entrée"
+    #starting_nodes = []
+    #for node in graph.nodes:
+        #if graph.predecessors(node) == ?:
+        #starting_nodes.append(node)
+    #return starting_nodes
+
+
+#def get_sink_nodes(graph):
+"prend en entrée un graphe et retourne un liste de noeuds de sortie"
+    #sink_nodes = []
+    #for node in graph.nodes:
+        #if graph.successors(node) == ?:
+        #sink_nodes.append(node)
+    #return sink_nodes
+
+
+#def get_contigs(graph, starting_nodes, sink_nodes):
+"""
+prend un graphe, une liste de noeuds d'entrée et une liste de noeuds de sortie
+et retourne une liste de tuples (contig, longueur du contig)
+"""
+    #utiliser fonctions graph.has_pasth() et graph.all_simple_paths() ?
+
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     pass
