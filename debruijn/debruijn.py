@@ -24,13 +24,13 @@ random.seed(9001)
 from random import randint
 import statistics
 
-__author__ = "Your Name"
+__authors__ = "Valentin Baloche & Alix de Thoisy"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["Valentin Baloche & Alix de Thoisy"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Valentin Baloche & Alix de Thoisy"
+__email__ = "valentin.baloche@gmail.fr, alixdet@protonmail.com"
 __status__ = "Developpement"
 
 def isfile(path):
@@ -66,21 +66,43 @@ def get_arguments():
                         help="Save graph as image (png)")
     return parser.parse_args()
 
+"""
+    Créez un dictionnaire contenant les k-mer uniques présents dans notre ensemble de reads.
+Nous aurons besoin de connaître le nombre d’occurrence de chaque k-mer. Trois fonctions sont
+à développer (les blocs sont interdépendant):
+"""
 
 def read_fastq(fastq_file):
-    pass
+    # TO BE TESTED
+    with open (fastq_file, 'r') as ff:
+        lines = ff.readlines()
+        for i in len(lines) : # TRY TO REMOVE IF
+            if i%4 == 1:
+                yield lines[i]
 
 
 def cut_kmer(read, kmer_size):
-    pass
+    # TO BE TESTED
+    for i in range(len(read) - kmer_size):
+        yield read[i:i + kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+    # TO BE TESTED
+    kmer_dict = {}
+    for read in read_fastq(fastq_file):
+        for kmer in cut_kmer(read, kmer_size):
+            kmer_dict.setdefault(kmer, 0)
+            kmer_dict[kmer] += 1
+    return kmer_dict
 
 
 def build_graph(kmer_dict):
-    pass
+    # TO BE TESTED
+    graph = nx.Graph()
+    for kmer in kmer_dict.keys.values():
+        graph.add_edge(kmer[:-1], kmer[1:], weight=kmer_dict[kmer])
+    return graph
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
