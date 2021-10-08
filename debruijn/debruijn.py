@@ -96,38 +96,87 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 def build_graph(kmer_dict):
     graph = nx.DiGraph()
-    for kmer in kmer_dict.keys():
+    for kmer in kmer_dict:
         graph.add_edge(kmer[:-1], kmer[1:], weight=kmer_dict[kmer])
     return graph
 
-#def get_starting_nodes(graph):
-"prend en entrée un graphe et retourne une liste de noeuds d'entrée"
-    #starting_nodes = []
-    #for node in graph.nodes:
-        #if graph.predecessors(node) == ?:
-        #starting_nodes.append(node)
-    #return starting_nodes
+
+def get_starting_nodes(graph):
+    starting_nodes = []
+    for node in graph.nodes:
+        if len([predec for predec in graph.predecessors(node)]) == 0:
+            starting_nodes.append(node)
+    return starting_nodes
 
 
-#def get_sink_nodes(graph):
-"prend en entrée un graphe et retourne un liste de noeuds de sortie"
-    #sink_nodes = []
-    #for node in graph.nodes:
-        #if graph.successors(node) == ?:
-        #sink_nodes.append(node)
-    #return sink_nodes
+def get_sink_nodes(graph):
+    sink_nodes = []
+    for node in graph.nodes:
+        if len([predec for predec in graph.successors(node)]) == 0:
+            sink_nodes.append(node)
+    return sink_nodes
 
 
-#def get_contigs(graph, starting_nodes, sink_nodes):
-"""
-prend un graphe, une liste de noeuds d'entrée et une liste de noeuds de sortie
-et retourne une liste de tuples (contig, longueur du contig)
-"""
+def get_contigs(graph, starting_nodes, sink_nodes):
+    """
+    prend un graphe, une liste de noeuds d'entrée et une liste de noeuds de sortie
+    et retourne une liste de tuples (contig, longueur du contig)
+    """
     #utiliser fonctions graph.has_pasth() et graph.all_simple_paths() ?
+    contigs = []
+    for starting_node in starting_nodes:
+        for sink_node in sink_nodes:
+            if nx.has_path(graph, starting_node, sink_node):
+                for path_list in nx.all_simple_paths(graph, starting_node, sink_node):
+                    # ex path = ["AGA", "GAT", "ATC"]
+                    # writing the path
+                    path = path_list[0]
+                    for i in range(1, len(path_list)):
+                        path += path_list[-1]
+                    contigs.append((path, len(path)))
+    return contigs
+
+def fill(text, width=80):
+    """Split text with a line return to respect fasta format"""
+    return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
+
+
+def save_contigs(contigs_list, output_file):
+    with open(output_file, 'w+') as of:
+        i = 0
+        for contig in contigs_list:
+            of.write('>contig_%i len=%i.' % (i, contig[1]))
+            of.write(fill(contig[0]))
+            i += 1
+
+"""
+3. Simplification du graphe de De Bruijn
+"""
+def path_average_weight(graph, path):
+    total_weight = 0
+    i = 0
+    for edge in graph.subgraph(path).edges(data=True):
+        total_weight += edge[2]['weight']
+        i += 1
+    return total_weight/i
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-    pass
+    for path in path_list:
+        if delete_entry_node and delete_sink_node:
+            for i in range(len(path) - 1):
+                graph.remove_edge(path[i], path[i + 1])
+        elif delete_entry_node:
+            for i in range(len(path) - 1):
+                graph.remove_edge(path[i], path[i + 1])
+        elif delete_sink_node:
+            for i in range(len(path) - 1):
+                graph.remove_edge(path[i], path[i + 1])
+        else:
+            for i in range(1, len(path) - 2):
+                graph.remove_edge(path[i], path[i + 1])
+    return graph
+
 
 def std(data):
     pass
@@ -137,8 +186,6 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
     pass
 
-def path_average_weight(graph, path):
-    pass
 
 def solve_bubble(graph, ancestor_node, descendant_node):
     pass
@@ -152,22 +199,8 @@ def solve_entry_tips(graph, starting_nodes):
 def solve_out_tips(graph, ending_nodes):
     pass
 
-def get_starting_nodes(graph):
-    pass
-
-def get_sink_nodes(graph):
-    pass
-
-def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
-
-def save_contigs(contigs_list, output_file):
-    pass
 
 
-def fill(text, width=80):
-    """Split text with a line return to respect fasta format"""
-    return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
 
 def draw_graph(graph, graphimg_file):
     """Draw the graph
