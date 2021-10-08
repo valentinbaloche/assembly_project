@@ -73,22 +73,19 @@ Nous aurons besoin de connaître le nombre d’occurrence de chaque k-mer. Trois
 """
 
 def read_fastq(fastq_file):
-    # TO BE TESTED
     with open (fastq_file, 'r') as ff:
         lines = ff.readlines()
-        for i in len(lines) : # TRY TO REMOVE IF
+        for i in range(len(lines)) : # try using next
             if i%4 == 1:
-                yield lines[i]
+                yield lines[i][:-1]
 
 
 def cut_kmer(read, kmer_size):
-    # TO BE TESTED
-    for i in range(len(read) - kmer_size):
+    for i in range(len(read) - kmer_size + 1):
         yield read[i:i + kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    # TO BE TESTED
     kmer_dict = {}
     for read in read_fastq(fastq_file):
         for kmer in cut_kmer(read, kmer_size):
@@ -98,9 +95,8 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
-    # TO BE TESTED
-    graph = nx.Graph()
-    for kmer in kmer_dict.keys.values():
+    graph = nx.DiGraph()
+    for kmer in kmer_dict.keys():
         graph.add_edge(kmer[:-1], kmer[1:], weight=kmer_dict[kmer])
     return graph
 
