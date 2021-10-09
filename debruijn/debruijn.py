@@ -112,7 +112,7 @@ def get_starting_nodes(graph):
 def get_sink_nodes(graph):
     sink_nodes = []
     for node in graph.nodes:
-        if len([predec for predec in graph.successors(node)]) == 0:
+        if len([succes for succes in graph.successors(node)]) == 0:
             sink_nodes.append(node)
     return sink_nodes
 
@@ -122,18 +122,15 @@ def get_contigs(graph, starting_nodes, sink_nodes):
     prend un graphe, une liste de noeuds d'entrée et une liste de noeuds de sortie
     et retourne une liste de tuples (contig, longueur du contig)
     """
-    #utiliser fonctions graph.has_pasth() et graph.all_simple_paths() ?
     contigs = []
     for starting_node in starting_nodes:
         for sink_node in sink_nodes:
             if nx.has_path(graph, starting_node, sink_node):
-                for path_list in nx.all_simple_paths(graph, starting_node, sink_node):
-                    # ex path = ["AGA", "GAT", "ATC"]
-                    # writing the path
-                    path = path_list[0]
-                    for i in range(1, len(path_list)):
-                        path += path_list[-1]
-                    contigs.append((path, len(path)))
+                for path in nx.all_simple_paths(graph, starting_node, sink_node):
+                    contig = path[0]
+                    for i in range(1, len(path)):
+                        contig += path[i][-1]
+                    contigs.append((contig, len(contig)))
     return contigs
 
 def fill(text, width=80):
