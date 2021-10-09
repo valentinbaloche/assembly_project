@@ -142,8 +142,7 @@ def save_contigs(contigs_list, output_file):
     with open(output_file, 'w+') as of:
         i = 0
         for contig in contigs_list:
-            of.write('>contig_%i len=%i.' % (i, contig[1]))
-            of.write(fill(contig[0]))
+            of.write('>contig_%i len=%i\n%s\n' % (i, contig[1], fill(contig[0])))
             i += 1
 
 """
