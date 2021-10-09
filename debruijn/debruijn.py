@@ -170,14 +170,24 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     return(graph)
 
 
+def select_best_path(graph, path_list, path_length, weight_avg_list, delete_entry_node=False, delete_sink_node=False):
+    if statistics.stdev(weight_avg_list) > 0:
+        del path_list[weight_avg_list.index(max(weight_avg_list))]
+        remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
+    
+    elif statistics.stdev(weight_avg_list) == 0:
+        if statistics.stdev(path_length) > 0:
+            del path_list[path_length.index(max(path_length))]
+            remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
+        
+        elif statistics.stdev(path_length) == 0:
+            del path_list[randint(0, len(path_list)-1)]
+            remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
+            
+    return(graph)
+
 def std(data):
     pass
-
-
-def select_best_path(graph, path_list, path_length, weight_avg_list, 
-                     delete_entry_node=False, delete_sink_node=False):
-    pass
-
 
 def solve_bubble(graph, ancestor_node, descendant_node):
     pass
