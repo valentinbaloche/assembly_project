@@ -160,18 +160,14 @@ def path_average_weight(graph, path):
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     for path in path_list:
         if delete_entry_node and delete_sink_node:
-            for i in range(len(path) - 1):
-                graph.remove_edge(path[i], path[i + 1])
+            graph.remove_nodes_from(path)
         elif delete_entry_node:
-            for i in range(len(path) - 1):
-                graph.remove_edge(path[i], path[i + 1])
+            graph.remove_nodes_from(path[:-1])
         elif delete_sink_node:
-            for i in range(len(path) - 1):
-                graph.remove_edge(path[i], path[i + 1])
+            graph.remove_nodes_from(path[1:])
         else:
-            for i in range(1, len(path) - 2):
-                graph.remove_edge(path[i], path[i + 1])
-    return graph
+            graph.remove_nodes_from(path[1:-1])
+    return(graph)
 
 
 def std(data):
