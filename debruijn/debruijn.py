@@ -185,11 +185,12 @@ def select_best_path(graph,
             del path_list[path_length.index(max(path_length))]
             remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
         
-        elif statistics.stdev(path_length) == 0:
+        elif std(path_length) == 0:
             del path_list[randint(0, len(path_list)-1)]
             remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
             
     return(graph)
+
 
 def std(data):
     total = 0
@@ -202,11 +203,42 @@ def std(data):
         print (d)
     return (squared_dev/(len(data) - 1))**0.5
 
+
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    path_list = []
+    path_length = []
+    weight_avg_list = []
+    
+    for path in nx.all_simple_paths(graph, ancestor_node, descendant_node):
+        path_list.append(path)
+        path_length.append(len(path))
+        weight_avg_list.append(path_average_weight(graph, path))
+        
+    select_best_path(graph, path_list, path_length, weight_avg_list, delete_entry_node = False, delete_sink_node = False)
+    
+    return(graph)
+
 
 def simplify_bubbles(graph):
-    pass
+    potential_ancestors = []
+    potential_descendants = []
+
+    #looking for potential ancestors and descendants:
+    for node in graph.nodes:
+        if len([succes for succes in graph.successors(node)]) > 1:
+            potential_ancestors.append(node)
+
+        if len([pred for pred in graph.predecessors(node)]) > 1:
+            potential_descendants.append(node)
+    
+    #looking for bubbles:
+    for pot_anc in potential_ancestors:
+        for pot_desc in potential_descendants:
+            if len([path for path in nx.all_simple_paths(graph, pot_anc, pot_desc)]) > 1:
+                solve_bubble(graph, pot_anc, pot_desc)
+    
+    return(graph)
+    
 
 def solve_entry_tips(graph, starting_nodes):
     pass
