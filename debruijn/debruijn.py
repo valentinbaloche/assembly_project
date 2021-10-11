@@ -13,17 +13,18 @@
 
 """Perform assembly based on debruijn graph."""
 
-import argparse
-import os
-import random
-import sys
-from operator import itemgetter
-
-from random import randint
-random.seed(9001)
 import matplotlib as plt
 import networkx as nx
 
+import argparse
+import os
+import pickle
+import random
+import sys
+from operator import itemgetter
+from random import randint
+
+random.seed(9001)
 
 __authors__ = "Valentin Baloche & Alix de Thoisy"
 __copyright__ = "Universite Paris Diderot"
@@ -69,8 +70,8 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    with open (fastq_file, 'r') as ff:
-        lines = ff.readlines()
+    with open (fastq_file, 'r') as fasta_buffer:
+        lines = fasta_buffer.readlines()
         for i in range(len(lines)) : # try using next
             if i%4 == 1:
                 yield lines[i][:-1]
@@ -272,6 +273,7 @@ def solve_entry_tips(graph, starting_nodes):
 
     return graph
 
+
 def solve_out_tips(graph, sink_nodes):
     tip_nodes = []
     path_list = []
@@ -336,8 +338,18 @@ def main():
     """
     Main program function
     """
-    # Get arguments
     args = get_arguments()
+
+    graph = build_graph(build_kmer_dict(args.fastq_file, args.kmer_size))
+
+    contigs = get_contigs(graph,
+                          starting_nodes=get_starting_nodes(graph),
+                          sink_nodes=get_sink_nodes(graph))
+    
+    # Writing contigs in a fasta file
+    save_contigs(contigs, args.output_file)
+
+    # Editing before or after writing the contigs ?
 
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit
