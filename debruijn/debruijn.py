@@ -13,16 +13,15 @@
 
 """Perform assembly based on debruijn graph."""
 
-import matplotlib as plt
-import networkx as nx
-
 import argparse
 import os
 import pickle
 import random
 import sys
-from operator import itemgetter
 from random import randint
+
+import matplotlib.pyplot as plt
+import networkx as nx
 
 random.seed(9001)
 
@@ -37,9 +36,17 @@ __status__ = "Developpement"
 
 def isfile(path):
     """Check if path is an existing file.
-      :Parameters:
-          path: Path to the file
+
+    Args:
+        path (str): Path to the file
+
+    Raises:
+        argparse.ArgumentTypeError: if not a file
+
+    Returns:
+        path(str): Path to the file
     """
+
     if not os.path.isfile(path):
         if os.path.isdir(path):
             msg = "{0} is a directory".format(path)
@@ -60,7 +67,7 @@ def get_arguments():
     parser.add_argument('-i', dest='fastq_file', type=isfile,
                         required=True, help="Fastq file")
     parser.add_argument('-k', dest='kmer_size', type=int,
-                        default=22, help="K-mer size (default 21)")
+                        default=22, help="K-mer size (default 22)")
     parser.add_argument('-o', dest='output_file', type=str,
                         default=os.curdir + os.sep + "contigs.fasta",
                         help="Output contigs in fasta file")
@@ -68,8 +75,16 @@ def get_arguments():
                         help="Save graph as image (png)")
     return parser.parse_args()
 
-
+##pylint: disable=C0200
 def read_fastq(fastq_file):
+    """Reads a fastq file
+
+    Args:
+        fastq_file (str): fastq file
+
+    Yields:
+        str: line containing the sequence
+    """
     with open (fastq_file, 'r') as fasta_buffer:
         lines = fasta_buffer.readlines()
         for i in range(len(lines)) : # try using next
@@ -78,11 +93,29 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read, kmer_size):
+    """Cuts kmer
+
+    Args:
+        read (str)
+        kmer_size (int)
+
+    Yields:
+        str: cut k-mer
+    """
     for i in range(len(read) - kmer_size + 1):
         yield read[i:i + kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
+    """Builds a kmer dictionary from a fastq file
+
+    Args:
+        fastq_file (str): path of fastq file
+        kmer_size (int): k-mer size
+
+    Returns:
+        kmer_dict: {k-mer(str): occur(int)}
+    """
     kmer_dict = {}
     for read in read_fastq(fastq_file):
         for kmer in cut_kmer(read, kmer_size):
@@ -92,6 +125,14 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    """Builds a networkx graph using a kmer dictionary
+
+    Args:
+        kmer_dict (dict(kmer, occur)): buid_kmer_dic() output
+
+    Returns:
+        networkx.DiGraph: directed graph
+    """
     graph = nx.DiGraph()
     for kmer in kmer_dict:
         graph.add_edge(kmer[:-1], kmer[1:], weight=kmer_dict[kmer])
@@ -99,6 +140,14 @@ def build_graph(kmer_dict):
 
 
 def get_starting_nodes(graph):
+    """Get nodes without predecessors
+
+    Args:
+        graph (networkx.DiGraph)
+
+    Returns:
+        list: nodes
+    """
     starting_nodes = []
     for node in graph.nodes:
         if len(list(graph.predecessors(node))) == 0:
@@ -107,6 +156,14 @@ def get_starting_nodes(graph):
 
 
 def get_sink_nodes(graph):
+    """Get nodes without successors
+
+    Args:
+        graph (networkx.DiGraph)
+
+    Returns:
+        list: nodes
+    """
     sink_nodes = []
     for node in graph.nodes:
         if len(list(graph.successors(node))) == 0:
@@ -115,9 +172,15 @@ def get_sink_nodes(graph):
 
 
 def get_contigs(graph, starting_nodes, sink_nodes):
-    """
-    prend un graphe, une liste de noeuds d'entrée et une liste de noeuds de sortie
-    et retourne une liste de tuples (contig, longueur du contig)
+    """Get contigs from a graph
+
+    Args:
+        graph (networkx.DiGraph): graph
+        starting_nodes (list): nodes at the start of the path
+        sink_nodes (list): nodes ending a path
+
+    Returns:
+        list: contigs
     """
     contigs = []
     for starting_node in starting_nodes:
@@ -136,6 +199,15 @@ def fill(text, width=80):
 
 
 def save_contigs(contigs_list, output_file):
+    """Saves contigs in fasta format file
+
+    Args:
+        contigs_list(list(str)): contigs
+        output_file (str): path/name of file
+
+    Returns:
+        None
+    """
     with open(output_file, 'w+') as o_file:
         i = 0
         for contig in contigs_list:
@@ -144,10 +216,17 @@ def save_contigs(contigs_list, output_file):
                                                       fill(contig[0])))
             i += 1
 
-"""
-3. Simplification du graphe de De Bruijn
-"""
+
 def path_average_weight(graph, path):
+    """Computes the average weight of edges on a path
+
+    Args:
+        graph (networx.DiGraph)
+        path (tuple)
+
+    Returns:
+        float: average weight
+    """
     total_weight = 0
     i = 0
     for edge in graph.subgraph(path).edges(data=True):
@@ -157,6 +236,17 @@ def path_average_weight(graph, path):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
+    """Removes a list of paths on a graph
+
+    Args:
+        graph (networkx.DiGraph)
+        path_list (list(tuples)): list of paths
+        delete_entry_node (bool)
+        delete_sink_node (bool)
+
+    Returns:
+        networkx.DiGraph: graph without paths
+    """
     for path in path_list:
         if delete_entry_node and delete_sink_node:
             graph.remove_nodes_from(path)
@@ -169,12 +259,26 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     return graph
 
 
+#pylint: disable=R0913
 def select_best_path(graph,
                      path_list,
                      path_length,
                      weight_avg_list,
                      delete_entry_node=False,
                      delete_sink_node=False):
+    """Selects the best path on a graph
+
+    Args:
+        graph (networkx.DiGraph)
+        path_list (list(tuples)): list of possible paths
+        path_length (list(int)): list of path length
+        weight_avg_list (list(float)): list of average weights
+        delete_entry_node (bool, optional). Defaults to False.
+        delete_sink_node (bool, optional). Defaults to False.
+
+    Returns:
+        networkx.DiGraph: graph
+    """
     if std(weight_avg_list) > 0:
         del path_list[weight_avg_list.index(max(weight_avg_list))]
         remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
@@ -192,18 +296,36 @@ def select_best_path(graph,
 
 
 def std(data):
+    """Computes stdev without 'statisctis' library
+
+    Args:
+        data (list(float))
+
+    Returns:
+        float: stdev
+    """
     total = 0
-    for d in data:
-        total += d
+    for datum in data:
+        total += datum
     mean = total/len(data)
     squared_dev = 0
-    for d in data:
-        squared_dev += (d - mean)**2
-        print (d)
+    for datum in data:
+        squared_dev += (datum - mean)**2
+        print (datum)
     return (squared_dev/(len(data) - 1))**0.5
 
 
 def solve_bubble(graph, ancestor_node, descendant_node):
+    """Removes the bubbles from a graph
+
+    Args:
+        graph (networkx.DiGraph)
+        ancestor_node (list): list of ancestor nodes
+        descendant_node (list): list of descendant nodes
+
+    Returns:
+        networkx.DiGraph: graph without bubbles
+    """
     path_list = []
     path_length = []
     weight_avg_list = []
@@ -224,6 +346,14 @@ def solve_bubble(graph, ancestor_node, descendant_node):
 
 
 def simplify_bubbles(graph):
+    """Calls solve_bubble() to simplify bubbles of a graph
+
+    Args:
+        graph (networkx.DiGraph)
+
+    Returns:
+        networkx.DiGraph: graph without bubbles
+    """
     potential_ancestors = []
     potential_descendants = []
 
@@ -245,6 +375,15 @@ def simplify_bubbles(graph):
 
 
 def solve_entry_tips(graph, starting_nodes):
+    """Locates and removes entry tips
+
+    Args:
+        graph (networkx.DiGraph)
+        starting_nodes (list): list of nodes without predecessors
+
+    Returns:
+        networkx.DiGraph: graph without entry tips
+    """
     tip_nodes = []
     path_list = []
     path_length = []
@@ -261,7 +400,8 @@ def solve_entry_tips(graph, starting_nodes):
                 for path in nx.all_simple_paths(graph, start_node, node):
                     path_list.append(path)
                 path_length.append(len(path_list[i]))
-                weight_avg_list.append(path_average_weight(graph, path_list[i]))
+                weight_avg_list.append(path_average_weight(graph,
+                                                           path_list[i]))
                 i += 1
 
         select_best_path(graph,
@@ -275,6 +415,15 @@ def solve_entry_tips(graph, starting_nodes):
 
 
 def solve_out_tips(graph, sink_nodes):
+    """Locates and removes out tips
+
+    Args:
+        graph (networkx.DiGraph)
+        sink_nodes (list): list of nodes without successors
+
+    Returns:
+        networkx.DiGraph: graph without out tips
+    """
     tip_nodes = []
     path_list = []
     path_length = []
@@ -306,7 +455,7 @@ def solve_out_tips(graph, sink_nodes):
 
 def draw_graph(graph, graphimg_file):
     """Draw the graph
-    """                                    
+    """
     fig, ax = plt.subplots()
     elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 3]
     #print(elarge)
@@ -330,7 +479,6 @@ def save_graph(graph, graph_file):
     with open(graph_file, "wt") as save:
         pickle.dump(graph, save)
 
-
 #==============================================================
 # Main program
 #==============================================================
@@ -342,14 +490,20 @@ def main():
 
     graph = build_graph(build_kmer_dict(args.fastq_file, args.kmer_size))
 
+    # Editing the graph
+    graph = simplify_bubbles(graph)
+    graph = solve_entry_tips(graph,
+                             starting_nodes=get_starting_nodes(graph))
+    graph = solve_out_tips(graph,
+                           sink_nodes=get_sink_nodes(graph))
+
     contigs = get_contigs(graph,
                           starting_nodes=get_starting_nodes(graph),
                           sink_nodes=get_sink_nodes(graph))
-    
+
+
     # Writing contigs in a fasta file
     save_contigs(contigs, args.output_file)
-
-    # Editing before or after writing the contigs ?
 
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit
@@ -361,6 +515,10 @@ def main():
     # if args.graph_file:
     #     save_graph(graph, args.graph_file)
 
+    # to run
+    # python3 debruijn/debruijn.py -i data/eva71_two_reads.fq -o data/eva71_two_reads_contigs.fasta
+    # python3 debruijn/debruijn.py -i data/eva71_hundred_reads.fq -o data/eva71_hundred_reads_contigs.fasta
+    # python3 debruijn/debruijn.py -i data/eva71_plus_perfect.fq -o data/eva71_plus_perfect_contigs.fasta
 
 if __name__ == '__main__':
     main()
